@@ -15,20 +15,26 @@ before_install:
   
 export:
  role='arn:aws:iam::581647696645:role/tx_lambda_function' 
+
 install: 
- - secure: "Tw5sQOtlDVrY/koGr20NdA4bO5ASEvOjuLMxBJWjLr/7c3M6QoZeXfqY0cLbEOTz2Loi37qnB56yE0MH3TCdCVi/W0hahoP2qJH9q28SSYr8wwJPIsKMc9DQPaDD85RH90vNMwHLpnM1JSImkoXNSAt2vjQT4hTTjenL01C+u2YlMc3UKv9oQ5xQFY9OF7XnjMXIEk6I+j4aKNmURrOKgGQVbSjwcpprbh+T8DaJTynZeOQaqE4mHfNFzhJAsWri1fHoppBVap79uI6rRM1Aw2H/t/zaiYAMu7Y2XAdmAR1SdrNLxeV3vd8jloba8izuzqQgSgPs+hn2Ynifhsw/ssDobHPhcKMcdqoul1IdwTgnfI1sT/O/aUev6s2y1LshW1kEXFr1Gs/i/hEMXgPG1BCSXAxyzA78t4jyjejnL7NOkqeMvnCazr5GtxHWVqYKRHRCyu/vhGoI2zuLR+Dw7d3F0As9o3333u907rDutjiq82n9sgDSG5KUOU73zgDWq2z/abGSGA8MmNzigKfBLGpcVC34QVAnnXJg/mq7J4kRheJMIK00jTAOUrW9KeUkBuBzK1Fd8S7iQglFUSa21GJD/dRcCIBdzhAVbX++gl7t811qzSIcUsdivsxt/5EyYDK/7eFywieB3whWougFGTayrIoQVpcHwSWTdag0NqI="
  - echo $SOMEVAR
  - pip install -r functions/request/requirements.txt -t functions/request
  - pip install coveralls
 #after_install:
 # command to run tests
 #before_script:
+
 script:
-  
   sh test.sh
+
 #script: coverage run test-setup.py test
 #after_script:
 after_success: 
   coveralls
 #after_failure:
 #nosetests
+
+env:
+
+secure:
+"Tw5sQOtlDVrY/koGr20NdA4bO5ASEvOjuLMxBJWjLr/7c3M6QoZeXfqY0cLbEOTz2Loi37qnB56yE0MH3TCdCVi/W0hahoP2qJH9q28SSYr8wwJPIsKMc9DQPaDD85RH90vNMwHLpnM1JSImkoXNSAt2vjQT4hTTjenL01C+u2YlMc3UKv9oQ5xQFY9OF7XnjMXIEk6I+j4aKNmURrOKgGQVbSjwcpprbh+T8DaJTynZeOQaqE4mHfNFzhJAsWri1fHoppBVap79uI6rRM1Aw2H/t/zaiYAMu7Y2XAdmAR1SdrNLxeV3vd8jloba8izuzqQgSgPs+hn2Ynifhsw/ssDobHPhcKMcdqoul1IdwTgnfI1sT/O/aUev6s2y1LshW1kEXFr1Gs/i/hEMXgPG1BCSXAxyzA78t4jyjejnL7NOkqeMvnCazr5GtxHWVqYKRHRCyu/vhGoI2zuLR+Dw7d3F0As9o3333u907rDutjiq82n9sgDSG5KUOU73zgDWq2z/abGSGA8MmNzigKfBLGpcVC34QVAnnXJg/mq7J4kRheJMIK00jTAOUrW9KeUkBuBzK1Fd8S7iQglFUSa21GJD/dRcCIBdzhAVbX++gl7t811qzSIcUsdivsxt/5EyYDK/7eFywieB3whWougFGTayrIoQVpcHwSWTdag0NqI="
