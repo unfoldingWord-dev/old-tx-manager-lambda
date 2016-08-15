@@ -16,7 +16,7 @@ before_install:
 export:
  role='arn:aws:iam::581647696645:role/tx_lambda_function' 
 install: 
- - pip install -r requirements.txt
+ - pip install -r functions/request/requirements.txt -t functions/request
  - pip install coveralls
 #after_install:
 # command to run tests
