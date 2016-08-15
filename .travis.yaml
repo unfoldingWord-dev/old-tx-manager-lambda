@@ -1,0 +1,32 @@
+language: python
+python:
+#  - "2.6"
+  - "2.7"
+#  - "3.2"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.5-dev" # 3.5 development branch
+#  - "nightly" # currently points to 3.6-dev
+
+# command to install dependencies
+before_install:
+ - sudo apt-get install -y curl tar
+  
+export:
+ role='arn:aws:iam::581647696645:role/tx_lambda_function' 
+install: 
+ - pip install -r requirements.txt
+ - pip install coveralls
+#after_install:
+# command to run tests
+#before_script:
+script:
+  
+  sh test.sh
+#script: coverage run test-setup.py test
+#after_script:
+after_success: 
+  coveralls
+#after_failure:
+#nosetests
