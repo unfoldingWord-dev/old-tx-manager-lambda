@@ -25,7 +25,7 @@ install:
 #before_script:
 
 script:
-echo $SOMEVAR
+  echo $SOMEVAR
 #  sh test.sh
 
 #script: coverage run test-setup.py test
