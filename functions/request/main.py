@@ -3,22 +3,30 @@
 from __future__ import print_function
 
 import boto3
+import json
 import gogs_client
 import hashlib
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Attr
 
-def get_user(data):
+data = {}
+event = {}
+context = {}
+
+def get_user():
     if 'user_token' not in data or not data['user_token']:
-        raise Exception('[BadRequest] user_token not given')
-    gogs_api = gogs_client.GogsApi("https://git.door43.org")
+        raise Exception('user_token not given')
+    gogs_url = "https://git.door43.org"
+    if 'gogs_url' in event:
+        gogs_url = event['gogs_url']
+    gogs_api = gogs_client.GogsApi(gogs_url)
     success = gogs_api.valid_authentication(gogs_client.GogsToken(data['user_token']))
     if not success:
-        raise Exception('[BadRequest] user_token invalid')
+        raise Exception('user_token invalid')
     return data['user_token']
 
-def list_endpoints(data):
-    user = get_user(data)
+def list_endpoints():
+    user = get_user()
     return {
         "version": "1",
         "links": [
@@ -35,7 +43,7 @@ def list_endpoints(data):
         ]
     }
 
-def register_module(data):
+def register_module():
     tablename = 'tx-module'
     dynamodb = boto3.resource('dynamodb')
 
@@ -50,7 +58,7 @@ def register_module(data):
 
     for field in required_fields:
         if field not in module or not module[field]:
-            raise Exception('[BadRequest] {0} not given'.format(field))
+            raise Exception('{0} not given'.format(field))
 
     for field in list_fields:
         if field in module:
@@ -59,7 +67,7 @@ def register_module(data):
 
     for field, value in enumerate(module):
         if field not in list_fields and isinstance(value, list):
-            raise Exception('[BadRequest] {0} cannot be a list'.format(field))
+            raise Exception('{0} cannot be a list'.format(field))
 
     if 'public_links' not in module:
         module['public_links'] = []
@@ -72,13 +80,9 @@ def register_module(data):
 
     table = dynamodb.Table(tablename)
 
-    try:
-        table.put_item(
-            Item=module
-        )
-    except Exception as e:
-        print("Error creating record for {0}:".format(module['name']))
-        print(e)
+    table.put_item(
+        Item=module
+    )
 
     response = table.get_item(
         Key={
@@ -88,19 +92,19 @@ def register_module(data):
     item = response['Item']
     return item
 
-def start_job(data):
-    user = get_user(data)
+def start_job():
+    user = get_user()
     tablename = 'tx-job'
     dynamodb = boto3.resource('dynamodb')
 
+    if 'source' not in data or not data['source']:
+        raise Exception('source url not given')
     if 'resource_type' not in data or not data['resource_type']:
-        raise Exception("[BadRequest] resource_type not given")
-
+        raise Exception('resource_type not given')
     if 'input_format' not in data or not data['input_format']:
-        raise Exception("[BadRequest] input_format not given")
-
+        raise Exception('input_format not given')
     if 'output_format' not in data or not data['output_format']:
-        raise Exception("[BadRequest] output_format not given")
+        raise Exception('output_format not given')
 
     table = dynamodb.Table('tx-module')
     response = table.scan()
@@ -113,19 +117,21 @@ def start_job(data):
                     module = m
 
     if not module:
-        raise Exception("[BadRequest] no converter was found to convert {0} from {1} to {2}".format(data['resource_type'], data['input_format'], data['output_format']))
+        raise Exception('no converter was found to convert {0} from {1} to {2}'.format(data['resource_type'], data['input_format'], data['output_format']))
 
     cdn_url = 'https://cdn.door43.org'
-    if 'cdn_url' in data:
-        cdn_url = data['cdn_url']
+    if 'cdn_url' in event:
+        cdn_url = event['cdn_url']
 
     created_at = datetime.utcnow()
     eta = created_at + timedelta(minutes=2)
     expiration = eta + timedelta(days=1)
-    job_id = hashlib.sha256('{0}-{1}-{2}'.format(data['user_token'], user, created_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))).hexdigest()
+    #job_id = hashlib.sha256('{0}-{1}-{2}'.format(data['user_token'], user, created_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))).hexdigest()
+    job_id = context.aws_request_id
     job = {
         'job_id': job_id,
         'user': user,
+        'source': data['source'],
         'resource_type': data['resource_type'],
         'input_format': data['input_format'],
         'output_format': data['output_format'],
@@ -150,13 +156,19 @@ def start_job(data):
     else:
         job['options'] = []
 
-    print("JOB:")
-    print(job)
-
     table = dynamodb.Table(tablename)
     table.put_item(
         Item=job
     )
+
+    lambda_client = boto3.client('lambda')
+    response = lambda_client.invoke(
+        FunctionName=module['name'],
+        Payload=json.dumps(job)
+    )
+    payload = json.loads(response['Payload'].read())
+    if 'error' in payload:
+        raise Exception('{0}'.format(payload["error"]))
 
     return {
         'job': job,
@@ -169,8 +181,8 @@ def start_job(data):
         ]
     }
 
-def list_jobs(data):
-    user = get_user(data)
+def list_jobs():
+    user = get_user()
     tablename = 'tx-job'
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(tablename)
@@ -179,8 +191,11 @@ def list_jobs(data):
     )
     return response['Items']
 
-def handle(event, ctx):
-    data = {}
+def handle(e, ctx):
+    global event, context, data
+    event = e
+    context = ctx
+
     action = "endpoints"
     if 'data' in event:
         data = event['data']
@@ -189,16 +204,19 @@ def handle(event, ctx):
     if 'body-json' in event and event['body-json'] and isinstance(event['body-json'], dict):
         data.update(event['body-json'])
 
-    if action == 'endpoints':
-        return list_endpoints(data)
-    elif action == 'module':
-        return register_module(data)
-    elif action == 'job':
-        if 'source' in data:
-            return start_job(data)
+    ret = ""
+    try:
+        if action == 'endpoints':
+            ret = list_endpoints()
+        elif action == 'module':
+            ret = register_module()
+        elif action == 'job':
+            if 'source' in data:
+                ret = start_job()
+            else:
+                ret = list_jobs()
         else:
-            return list_jobs(data)
-    else:
-        raise Exception("[BadRequest] Invalid action '{0}'".format(action))
-
-
+            raise Exception('Invalid action')
+    except Exception as e:
+        ret = {'status':400,'error':'Bad Request: {0}'.format(str(e))}
+    return ret
