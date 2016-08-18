@@ -1,2 +1,5 @@
 .idea
+functions/request/*
+functions/request/main.py
+functions/request/reqirements.txt
 
