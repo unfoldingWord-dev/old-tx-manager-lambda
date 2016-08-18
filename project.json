@@ -2,8 +2,8 @@
 {
   "name": "tx-manager",
   "description": "tX Manager",
-  "memory": 128,
-  "timeout": 5,
+  "memory": 512,
+  "timeout": 500,
   "role": "arn:aws:iam::581647696645:role/tx_lambda_function",
   "environment": {}
 }

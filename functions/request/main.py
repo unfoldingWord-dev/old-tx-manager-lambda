@@ -119,15 +119,16 @@ def start_job():
     if not module:
         raise Exception('no converter was found to convert {0} from {1} to {2}'.format(data['resource_type'], data['input_format'], data['output_format']))
 
-    cdn_url = 'https://cdn.door43.org'
-    if 'cdn_url' in event:
-        cdn_url = event['cdn_url']
+    cdn_bucket = event['cdn_bucket']
+    if 'cdn_bucket' in event:
+        cdn_bucket = event['cdn_bucket']
 
     created_at = datetime.utcnow()
     eta = created_at + timedelta(minutes=2)
     expiration = eta + timedelta(days=1)
-    #job_id = hashlib.sha256('{0}-{1}-{2}'.format(data['user_token'], user, created_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))).hexdigest()
     job_id = context.aws_request_id
+    file_path = 'tx/job/{0}.{1}'.format(job_id, data['output_format'])
+    file_url = 'https://{0}/{1}'.format(cdn_bucket, file_path)
     job = {
         'job_id': job_id,
         'user': user,
@@ -137,7 +138,7 @@ def start_job():
         'output_format': data['output_format'],
         'created_at': created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         'eta': eta.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        'output': "{0}/tx/job/{1}.{2}".format(cdn_url, job_id, data['output_format']),
+        'output': file_url,
         "output_expiration": expiration.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "links": {
             "href": "/job/{0}".format(job_id),
@@ -161,10 +162,16 @@ def start_job():
         Item=job
     )
 
+    convert_payload = {
+        'job': job,
+        'bucket': cdn_bucket,
+        'output_file': file_path
+    }
+
     lambda_client = boto3.client('lambda')
     response = lambda_client.invoke(
         FunctionName=module['name'],
-        Payload=json.dumps(job)
+        Payload=json.dumps(convert_payload)
     )
     payload = json.loads(response['Payload'].read())
     if 'error' in payload:
@@ -172,6 +179,7 @@ def start_job():
 
     return {
         'job': job,
+        'bucket':
         "links": [
             {
                 "href": "/job",

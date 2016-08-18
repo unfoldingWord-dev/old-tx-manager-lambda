@@ -1,2 +1,0 @@
-gogs_client
-tests
