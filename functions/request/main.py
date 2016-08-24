@@ -5,7 +5,7 @@ from __future__ import print_function
 import boto3
 import json
 import gogs_client
-import hashlib
+
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Attr
 
@@ -119,7 +119,7 @@ def start_job():
     if not module:
         raise Exception('no converter was found to convert {0} from {1} to {2}'.format(data['resource_type'], data['input_format'], data['output_format']))
 
-    cdn_bucket = event['cdn_bucket']
+    cdn_bucket = 'cdn.door43.org'
     if 'cdn_bucket' in event:
         cdn_bucket = event['cdn_bucket']
 
@@ -127,8 +127,8 @@ def start_job():
     eta = created_at + timedelta(minutes=2)
     expiration = eta + timedelta(days=1)
     job_id = context.aws_request_id
-    file_path = 'tx/job/{0}.{1}'.format(job_id, data['output_format'])
-    file_url = 'https://{0}/{1}'.format(cdn_bucket, file_path)
+    outputFile = 'tx/job/{0}.{1}'.format(job_id, data['output_format'])
+    outputUrl = 'https://{0}/{1}'.format(cdn_bucket, outputFile)
     job = {
         'job_id': job_id,
         'user': user,
@@ -138,7 +138,7 @@ def start_job():
         'output_format': data['output_format'],
         'created_at': created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         'eta': eta.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        'output': file_url,
+        'output': outputUrl,
         "output_expiration": expiration.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "links": {
             "href": "/job/{0}".format(job_id),
@@ -163,9 +163,11 @@ def start_job():
     )
 
     convert_payload = {
-        'job': job,
-        'bucket': cdn_bucket,
-        'output_file': file_path
+        'data': {
+            'job': job,
+            's3_bucket': cdn_bucket,
+            's3_file': outputFile
+        }
     }
 
     lambda_client = boto3.client('lambda')
@@ -177,9 +179,10 @@ def start_job():
     if 'error' in payload:
         raise Exception('{0}'.format(payload["error"]))
 
+    return payload
+
     return {
         'job': job,
-        'bucket':
         "links": [
             {
                 "href": "/job",
@@ -212,7 +215,6 @@ def handle(e, ctx):
     if 'body-json' in event and event['body-json'] and isinstance(event['body-json'], dict):
         data.update(event['body-json'])
 
-    ret = ""
     try:
         if action == 'endpoints':
             ret = list_endpoints()
@@ -226,5 +228,5 @@ def handle(e, ctx):
         else:
             raise Exception('Invalid action')
     except Exception as e:
-        ret = {'status':400,'error':'Bad Request: {0}'.format(str(e))}
+        raise Exception('Bad Request: {0}'.format(str(e)))
     return ret
