@@ -48,7 +48,7 @@ def register_module():
     dynamodb = boto3.resource('dynamodb')
 
     fields = ['name', 'version', 'public_links', 'private_links', 'type', 'input_format', 'output_format', 'resource_types', 'options']
-    required_fields = ['name', 'type', 'input_format', 'output_format', 'resource_types', 'options']
+    required_fields = ['name', 'type', 'input_format', 'output_format', 'resource_types']
     list_fields = ['public_links', 'private_links', 'input_format', 'output_format', 'resource_types', 'options']
 
     module = {}
@@ -57,7 +57,7 @@ def register_module():
             module[field] = data[field]
 
     for field in required_fields:
-        if field not in module or not module[field]:
+        if field not in module:
             raise Exception('{0} not given'.format(field))
 
     for field in list_fields:
@@ -127,7 +127,7 @@ def start_job():
     eta = created_at + timedelta(minutes=2)
     expiration = eta + timedelta(days=1)
     job_id = context.aws_request_id
-    outputFile = 'tx/job/{0}.{1}'.format(job_id, data['output_format'])
+    outputFile = 'tx/job/{0}.zip'.format(job_id)
     outputUrl = 'https://{0}/{1}'.format(cdn_bucket, outputFile)
     job = {
         'job_id': job_id,
@@ -176,10 +176,9 @@ def start_job():
         Payload=json.dumps(convert_payload)
     )
     payload = json.loads(response['Payload'].read())
-    if 'error' in payload:
-        raise Exception('{0}'.format(payload["error"]))
 
-    return payload
+    if 'errorMessage' in payload:
+        raise Exception('{0}'.format(payload["errorMessage"]))
 
     return {
         'job': job,
@@ -189,7 +188,8 @@ def start_job():
                 "rel": "list",
                 "method": "GET"
             },
-        ]
+        ],
+        'response': payload
     }
 
 def list_jobs():
