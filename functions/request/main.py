@@ -23,7 +23,10 @@ def get_user():
     success = gogs_api.valid_authentication(gogs_client.GogsToken(data['user_token']))
     if not success:
         raise Exception('user_token invalid')
-    return data['user_token']
+    if 'username' in data and data['username']:
+        return data['username']
+    else:
+        return data['user_token']
 
 def list_endpoints():
     user = get_user()
@@ -147,16 +150,13 @@ def start_job():
         }
     }
 
-    if 'callback' in data:
+    if 'callback' in data and data['callback']:
         job['callback'] = data['callback']
-    else:
-        job['callback'] = ""
 
-    if 'options' in data:
+    if 'options' in data and data['options']:
         job['options'] = data['options']
-    else:
-        job['options'] = []
 
+    print(job)
     table = dynamodb.Table(tablename)
     table.put_item(
         Item=job
@@ -228,5 +228,6 @@ def handle(e, ctx):
         else:
             raise Exception('Invalid action')
     except Exception as e:
-        raise Exception('Bad Request: {0}'.format(str(e)))
+        e.message = 'Bad request: {0}'.format(e.message)
+        raise e
     return ret
