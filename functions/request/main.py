@@ -215,7 +215,8 @@ def handle(e, ctx):
     if 'body-json' in event and event['body-json'] and isinstance(event['body-json'], dict):
         data.update(event['body-json'])
 
-    try:
+#    try:
+    if True:
         if action == 'endpoints':
             ret = list_endpoints()
         elif action == 'module':
@@ -227,7 +228,9 @@ def handle(e, ctx):
                 ret = list_jobs()
         else:
             raise Exception('Invalid action')
-    except Exception as e:
-        e.message = 'Bad request: {0}'.format(e.message)
-        raise e
+    # except Exception as e:
+    #     print(e)
+    #     print(e.message)
+    #     e.message = 'Bad request: {0}'.format(e.message)
+    #     raise e
     return ret
