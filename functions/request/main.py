@@ -100,7 +100,7 @@ def start_job():
     tablename = 'tx-job'
     dynamodb = boto3.resource('dynamodb')
 
-    if not 'cdn_bucket' in event:
+    if 'cdn_bucket' not in event:
         raise Exception('"cdn_bucket" not in payload')
     if 'source' not in data or not data['source']:
         raise Exception('"source" url not in payload')
