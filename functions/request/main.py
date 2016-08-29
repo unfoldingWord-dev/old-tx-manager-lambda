@@ -15,21 +15,21 @@ context = {}
 
 def get_user():
     if 'user_token' not in data or not data['user_token']:
-        raise Exception('user_token not given')
-    gogs_url = "https://git.door43.org"
-    if 'gogs_url' in event:
-        gogs_url = event['gogs_url']
-    gogs_api = gogs_client.GogsApi(gogs_url)
-    success = gogs_api.valid_authentication(gogs_client.GogsToken(data['user_token']))
+        raise Exception('"user_token" not in payload')
+    if 'gogs_url' not in data or not data['gogs_url']:
+        raise Exception('"gogs_url" not in payload')
+
+    gogsUrl = event['gogs_url']
+    gogsApi = gogs_client.GogsApi(gogsUrl)
+    success = gogsApi.valid_authentication(gogs_client.GogsToken(data['user_token']))
     if not success:
-        raise Exception('user_token invalid')
+        raise Exception('"user_token" invalid, needs to be a valid Gogs user at {0}'.format(event['gogs_url']))
     if 'username' in data and data['username']:
         return data['username']
     else:
         return data['user_token']
 
 def list_endpoints():
-    user = get_user()
     return {
         "version": "1",
         "links": [
@@ -100,14 +100,16 @@ def start_job():
     tablename = 'tx-job'
     dynamodb = boto3.resource('dynamodb')
 
+    if not 'cdn_bucket' in event:
+        raise Exception('"cdn_bucket" not in payload')
     if 'source' not in data or not data['source']:
-        raise Exception('source url not given')
+        raise Exception('"source" url not in payload')
     if 'resource_type' not in data or not data['resource_type']:
-        raise Exception('resource_type not given')
+        raise Exception('"resource_type" not in payload')
     if 'input_format' not in data or not data['input_format']:
-        raise Exception('input_format not given')
+        raise Exception('"input_format" not in payload')
     if 'output_format' not in data or not data['output_format']:
-        raise Exception('output_format not given')
+        raise Exception('"output_format" not in payload')
 
     table = dynamodb.Table('tx-module')
     response = table.scan()
@@ -122,16 +124,12 @@ def start_job():
     if not module:
         raise Exception('no converter was found to convert {0} from {1} to {2}'.format(data['resource_type'], data['input_format'], data['output_format']))
 
-    cdn_bucket = 'cdn.door43.org'
-    if 'cdn_bucket' in event:
-        cdn_bucket = event['cdn_bucket']
-
     created_at = datetime.utcnow()
     eta = created_at + timedelta(minutes=2)
     expiration = eta + timedelta(days=1)
     job_id = context.aws_request_id
     outputFile = 'tx/job/{0}.zip'.format(job_id)
-    outputUrl = 'https://{0}/{1}'.format(cdn_bucket, outputFile)
+    outputUrl = 'https://{0}/{1}'.format(event["cdn_bucket"], outputFile)
     job = {
         'job_id': job_id,
         'user': user,
@@ -165,16 +163,16 @@ def start_job():
     payload = {
         'data': {
             'job': job,
-            's3_bucket': cdn_bucket,
-            's3_file': outputFile
+            'cdn_bucket': event['cdn_bucket'],
+            'cdn_file': outputFile
         }
     }
 
     print("Payload to {0}:".format(module['name']))
     print(payload)
 
-    lambda_client = boto3.client('lambda')
-    response = lambda_client.invoke(
+    lambdaClient = boto3.client('lambda')
+    response = lambdaClient.invoke(
         FunctionName=module['name'],
         Payload=json.dumps(payload)
     )
