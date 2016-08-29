@@ -162,7 +162,7 @@ def start_job():
         Item=job
     )
 
-    convert_payload = {
+    payload = {
         'data': {
             'job': job,
             's3_bucket': cdn_bucket,
@@ -170,15 +170,21 @@ def start_job():
         }
     }
 
+    print("Payload to {0}:".format(module['name']))
+    print(payload)
+
     lambda_client = boto3.client('lambda')
     response = lambda_client.invoke(
         FunctionName=module['name'],
-        Payload=json.dumps(convert_payload)
+        Payload=json.dumps(payload)
     )
-    payload = json.loads(response['Payload'].read())
+    responsePayload = json.loads(response['Payload'].read())
 
-    if 'errorMessage' in payload:
-        raise Exception('{0}'.format(payload["errorMessage"]))
+    print("Response payload from {0}:".format(module['name']))
+    print(responsePayload)
+
+    if 'errorMessage' in responsePayload:
+        raise Exception('{0}'.format(responsePayload["errorMessage"]))
 
     return {
         'job': job,
@@ -189,7 +195,7 @@ def start_job():
                 "method": "GET"
             },
         ],
-        'response': payload
+        'response': responsePayload
     }
 
 def list_jobs():
