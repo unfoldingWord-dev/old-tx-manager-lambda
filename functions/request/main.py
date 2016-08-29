@@ -14,10 +14,10 @@ event = {}
 context = {}
 
 def get_user():
+    if 'gogs_url' not in event or not event['gogs_url']:
+        raise Exception('"gogs_url" not in payload')
     if 'user_token' not in data or not data['user_token']:
         raise Exception('"user_token" not in payload')
-    if 'gogs_url' not in data or not data['gogs_url']:
-        raise Exception('"gogs_url" not in payload')
 
     gogsUrl = event['gogs_url']
     gogsApi = gogs_client.GogsApi(gogsUrl)
