@@ -1,6 +1,6 @@
 .idea
-functions/request/*
-functions/request/main.py
-functions/request/reqirements.txt
-functions/request/function.json
 
+functions/request/*
+!functions/request/main.py
+!functions/request/reqirements.txt
+!functions/request/function.json

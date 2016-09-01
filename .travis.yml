@@ -1,41 +1,21 @@
 language: python
 python:
-#  - "2.6"
-  - "2.7"
-#  - "3.2"
-#  - "3.3"
-#  - "3.4"
-#  - "3.5"
-#  - "3.5-dev" # 3.5 development branch
-#  - "nightly" # currently points to 3.6-dev
-
-# command to install dependencies
+- '2.7'
 before_install:
- - sudo apt-get install -y curl tar
-  
-export:
- role='arn:aws:iam::581647696645:role/tx_lambda_function' 
-
-install: 
- - echo $SOMEVAR
-# - pip install -r functions/request/requirements.txt -t functions/request
-# - pip install coveralls
-#after_install:
-# command to run tests
-#before_script:
-
-script:
-  echo $AWS_SECRET_ACCESS_ID;
-  echo $AWS_ACCESS_KEY_ID;
-#  sh test.sh
-
-#script: coverage run test-setup.py test
-#after_script:
-after_success: 
-#  coveralls
-#after_failure:
-#nosetests
-
+- sudo apt-get install -y curl tar
+- sudo apt-get install -y awsci
+- pip install awscli
+- "./travis-install-apex.sh"
+install:
+- "./install-requirements.sh"
+- pip install coveralls
+script: 
+- echo "At script"
+after_success:
+- coveralls
+- "./deploy.sh"
 env:
-  - secure: "aIBewLmbVlscQdCGiTrbw+bcbR5Sc0i0IiS9MY3hdR8WN61S0O9xIFxLArotiCm+Dk9P5PQf/oxpL0Mv9Pc5NcuMT/AsKai7WiqyefIk/5KG9g6LFdFP21JflAUqEFziLjr0pOxrn/Hys4OlvXuclmJj0rM/MKNERC1+0Vp+OOqTtZ+DZY7y4MWthzxNnvaJ/MJ+0oAMbyk3KQ8TSP3kHwEUqWHPpXGeDlY3v9rb5lgQdb3DYBzTM6+bDM/80npvTNNVa7QXdTeCD+qAUdH8ps9RWBr32rkRRyYA/JSGr34GV0+BUP1Jqhu7ENdIc362oz/Jh3wf1MQPFIR5UxXSdn5fjPEcxRZfswyYXPnhM3u6oX5mIQG80FguEe+HIdVtxSXOrJAgu8IatBBKRkCnWBzCivUKO4orkxyrUKeF0rbE0JQ4yFtG1RASk4DAr9Bfqmzq4RiXRY2OmOqsJq2R5F70JsxxkT4HZdFEGcKb5zelYEuxndLNBIXP4yC9XCZdRyJO56b2Ox0we6qyC8JmIvr5sxRM9MRiWm9SAzBb1nPza3rraSs/vdrR6GWTq7vHgdG795uacFaj66nQvUD1ztVZ+ioQa9QHLK2isku3ZAKC8dWXEDX56KK8qSgXNn+xKqcRLrxB6iibZsqVi/TRvTJ80LYLm/NXD8k2I1V/YhY=" 
-    secure: "gfjhYZe/s5mGW/L2/cVgBToSe8KCoZwbtJct1VjG1Rcoyvo+0DwhIvqon957jqppgMUO7qsOplkdoaSgMHJBWKECWH6M4YuF0DOYAuIbAtNdFa+AxbtCLeWbgydVZPd6pRDLKU6Fb4Y9jl41FzrV0rHo2/bp/PalY4ZQ9AcQ/qToiOvvW9kCTCdD/C9hNR5ijirdYVxM/A3cgrb9fnxvEvNx+AGwHShNLQkOHbDQXOQJPS3a+WLthGhE9EgzL85IgXF6KB6DgC4v9gogNButz3KNQVmAlPM3bC89finJcwZwBtnqGQLVvrIP7kjJCqEl4m1U3BD+c3VYl9T0opIeNpkWHUvwRPBOQ/R8HiXK9NN631ZuFGxo/iySeuAzSYTdz33yqXyIS+gsK/+Ym04kAxa0u4J1qiA98jzSi+QnDIUIQmAgOiEoGRtgs0plKncoJQQdmSCywfRVP54UbTULhIFFXddGdvRLP1BDNDye1hnj/WicFv5S+SM6sHhfyr9jrOqbjqvaLJwoZSWVh5S4le4q9yo+p1iQx/XbkOYf9Mn/vP3WB+4A0bQcdEQZHLfxb3wSilNeHkEBKHhQJvQTjiSM42OFCmUUTIX/9BR/wsXUyCffyf3PR/1/Bl+IrtXy/Vn1nEIHR97Oox69GM2uiW+LG0bQt2Valdos2vM0+dY="
+  global:
+  - PYTHONDONTWRITEBYTECODE=true
+  - secure: BdrtsCuMdQMvZqnOwHFZh7LooL8mo55kj0NDIyzEChT2sfPDpOC+5hpCnBiA+0Q+47hyjwNdB31C8HBc/ms4zO7aNjDPzVsiCj+WUyn1bWMKt9gg/YXZd+oDybKz+8cIL6OafaR0tmgcn7WtpsRbk518x8EaTEjI0a0eHvrGBYMJkznzs9E8DGS07U81wUuCT6JauZeKXYd5Jllk9tTNJKcCJLUD/v1xwVWyYhH+4F3yROzG7yOPph8JCf1+Dp8mVbQ1pIMD5AxLp+qCzqsH4k/qmz91tf+LFU6nZZNfWy8sqNqJt5fMnp/gHyi4EU7yDT9PE0JJZ0A33NsapAJBGTE/ZRA3KPa5rGw4T0841/8qOEHdfuI3UjrRDepltaQkag76QJPtpoCnI+HcKMs3eBqObW5RuCbH/DlX0uzAiR3PSju5L2sSJ8x7zmi2gLaSq475TNCZovpUMPNRQp404gxgGe3NfbQPSdFkkLA1V5YwSCODE2kxOO2gJtQrqVdvXHFY1c+No1pOzSWJIpXvIbxDdwdikoaVKcpAP47NDvPx9NWOFVs7CmWIc/XuQNUz4IiqmnOAKq4/9URRkeewc1TNTmnGLLmzTEzsvEhDaUeW0ITW6MMWxncIB0FPyLrnAMql6BAEdoFuKx6iweG3sIAFI1dge6Uvo7Xflnz4PJ0=
+  - secure: AV7TpiQMMNDZQkiCPQTjmt6jds84FeBgIbs0fa52vQ+hwFo87Un849poe2PK5vSOI0NvfLelPuucZKC6EcjG+tXl4Tmh62O9KgyMFjbgP5/seyRJldVeHfOTAX0jXUBrZ9nrEeAQMQ4jOZdykWjHy+pHnuxwM82C7ExduQRcCrrB2z5/R2gtoyUxy8Jo1mv+aV4tVJmypZNrH5FtXY3I+P5zVcZRVP1Ry9trJpTdmJE2KDAj1jn3Upj3KLi+F3gUB/ioPAfF0yGfXh7id9ar3SQk5rFXMZDJjUIKbxZYXjsTyRWv8mfdCcBIu8dvmfJwbWKj5khYBFf2Hmz5KpoNRr+bQf6TXSHwgrC6hSui7vrPbn92d4tmmQdm5ylyCpotJJbEP++MgfE+IQCPk6JKT+K1moSdYVjKJ5WvlIZkgbjT/v05CFPTV4rU5pQxKjIp9VhzbH+a9jppleUlWfU04HsBhHsqJdu2KBf0y6Baix975N+2nPXKnzbWgDVMOkyNQyThiq9QenPgT7MTcbVKM9aQMsLjg+VsFkR+MB7xZ6YDL3gmLa84qLk7vdvPFrHkv4hyQBIt1SD1EyCbl5CgWARfN7pC0Mi39sPY6evFEHAWMbGjUoda4ZqYNftbnwKPOJ4uAJBMvZYRAlryLatf8H+xF+lXq5JNNJlYHsW9XD4=

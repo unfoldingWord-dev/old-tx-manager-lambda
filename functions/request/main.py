@@ -13,6 +13,7 @@ data = {}
 event = {}
 context = {}
 
+
 def get_user():
     if 'gogs_url' not in event or not event['gogs_url']:
         raise Exception('"gogs_url" not in payload')
@@ -28,6 +29,7 @@ def get_user():
         return data['username']
     else:
         return data['user_token']
+
 
 def list_endpoints():
     return {
@@ -46,9 +48,10 @@ def list_endpoints():
         ]
     }
 
+
 def register_module():
-    tablename = 'tx-module'
     dynamodb = boto3.resource('dynamodb')
+    lambdaClient = boto3.client('lambda')
 
     fields = ['name', 'version', 'public_links', 'private_links', 'type', 'input_format', 'output_format', 'resource_types', 'options']
     required_fields = ['name', 'type', 'input_format', 'output_format', 'resource_types']
@@ -81,8 +84,7 @@ def register_module():
     if 'version' not in module:
         module['version'] = 1
 
-    table = dynamodb.Table(tablename)
-
+    table = dynamodb.Table('tx-module')
     table.put_item(
         Item=module
     )
@@ -93,11 +95,73 @@ def register_module():
         }
     )
     item = response['Item']
+
+    # Getting the ARN for the Function that is being registered so we can subscribe it to topics
+    functionArn = None
+    response = lambdaClient.get_function(FunctionName=module['name'])
+    if response and 'Configuration' in response and 'FunctionArn' in response['Configuration']:
+        functionArn = response['Configuration']['FunctionArn']
+    print("function:")
+    print(response)
+    print(functionArn)
+
+    messageStoreArn = None
+    response = lambdaClient.get_function(FunctionName='SNS_messageStore')
+    if response and 'Configuration' in response and 'FunctionArn' in response['Configuration']:
+        messageStoreArn = response['Configuration']['FunctionArn']
+    print("SNS_messageStore ARN:")
+    print(response)
+    print(messageStoreArn)
+
+    # Creating a topic of each resource_type/input_format/output_format combination, and subscribe this module to it
+    snsClient = boto3.client('sns')
+    for rtype in module['resource_types']:
+        for iformat in module['input_format']:
+            for oformat in module['output_format']:
+                topicName = '{0}-{1}2{2}'.format(rtype, iformat, oformat)
+                response = snsClient.create_topic(Name=topicName)
+                print("topicArn query response:")
+                print(response)
+                if response and 'TopicArn' in response:
+                    topicArn = response['TopicArn']
+                    print('TopicArn: {0}'.format(topicArn))
+                    topicTable = dynamodb.Table('tx-topic')
+                    topicTable.put_item(
+                        Item={'TopicName': topicName, 'TopicArn': topicArn}
+                    )
+
+                    # Will register this function if there is an ARN for it
+                    if functionArn:
+                        response = snsClient.subscribe(
+                            TopicArn=topicArn,
+                            Protocol='lambda',
+                            Endpoint=functionArn
+                        )
+                        print("subscribe:")
+                        print(response)
+                    # Adding tx-manager_messageLog so we can record the messages
+                    snsClient.subscribe(
+                        TopicArn=topicArn,
+                        Protocol='lambda',
+                        Endpoint=messageStoreArn
+                    )
+                    # Adding myself for testing purposes
+                    snsClient.subscribe(
+                        TopicArn=topicArn,
+                        Protocol='email-json',
+                        Endpoint='richmahnwa+sns@gmail.com'
+                    )
+                    # Adding my phone for teseting purposes
+                    snsClient.subscribe(
+                        TopicArn=topicArn,
+                        Protocol='sms',
+                        Endpoint='2084096665'
+                    )
     return item
 
-def start_job():
+
+def broadcast_job():
     user = get_user()
-    tablename = 'tx-job'
     dynamodb = boto3.resource('dynamodb')
 
     if 'cdn_bucket' not in event:
@@ -111,25 +175,14 @@ def start_job():
     if 'output_format' not in data or not data['output_format']:
         raise Exception('"output_format" not in payload')
 
-    table = dynamodb.Table('tx-module')
-    response = table.scan()
-    modules = response['Items']
-    module = None
-    for m in modules:
-        if data['resource_type'] in m['resource_types']:
-            if data['input_format'] in m['input_format']:
-                if data['output_format'] in m['output_format']:
-                    module = m
-
-    if not module:
-        raise Exception('no converter was found to convert {0} from {1} to {2}'.format(data['resource_type'], data['input_format'], data['output_format']))
-
     created_at = datetime.utcnow()
     eta = created_at + timedelta(minutes=2)
     expiration = eta + timedelta(days=1)
-    job_id = context.aws_request_id
-    outputFile = 'tx/job/{0}.zip'.format(job_id)
-    outputUrl = 'https://{0}/{1}'.format(event["cdn_bucket"], outputFile)
+    job_id = context.aws_request_id # The JOB ID will simply be this Lambda instance's unique request ID
+    outputFile = 'tx/job/{0}.zip'.format(job_id) # All conversions must result in a ZIP of the converted file(s)
+    outputUrl = 'https://s3-us-west-2.amazonaws.com/{0}/{1}'.format(event["cdn_bucket"], outputFile)
+
+    # Info to store to DynamoDB tx-job table
     job = {
         'job_id': job_id,
         'user': user,
@@ -154,47 +207,62 @@ def start_job():
     if 'options' in data and data['options']:
         job['options'] = data['options']
 
+    print('Job to save to tx-job:')
     print(job)
-    table = dynamodb.Table(tablename)
-    table.put_item(
+
+    jobTable = dynamodb.Table('tx-job')
+    jobTable.put_item(
         Item=job
     )
 
-    payload = {
-        'data': {
-            'job': job,
-            'cdn_bucket': event['cdn_bucket'],
-            'cdn_file': outputFile
+    # Will now broadcast this job to all subscribed to the <resource_type>-<input_format>2<output_format> topic
+    snsClient = boto3.client('sns')
+    # Going to get the ARN for the topic that we stored when creating it in register_module()
+    topicTable = dynamodb.Table('tx-topic')
+    topicName = '{0}-{1}2{2}'.format(job['resource_type'], job['input_format'], job['output_format'])
+    response = topicTable.get_item(
+        Key={
+            'TopicName': topicName
         }
-    }
-
-    print("Payload to {0}:".format(module['name']))
-    print(payload)
-
-    lambdaClient = boto3.client('lambda')
-    response = lambdaClient.invoke(
-        FunctionName=module['name'],
-        Payload=json.dumps(payload)
     )
-    responsePayload = json.loads(response['Payload'].read())
+    print("topic query response:")
+    print(response)
+    # If there is a Topic with this name, we will continue to try to broadcast...
+    if response and 'Item' in response and 'TopicArn' in response['Item']:
+        topicArn = response['Item']['TopicArn']
+        response = snsClient.get_topic_attributes(TopicArn=topicArn)
+        print('topic attributes request:')
+        print(response)
 
-    print("Response payload from {0}:".format(module['name']))
-    print(responsePayload)
+        # Only broadcast if there are confirmed subscribers...
+        if response and 'Attributes' in response and 'SubscriptionsConfirmed' in response['Attributes'] and response['Attributes']['SubscriptionsConfirmed'] > 0:
+            subject = 'Job Request: {0} {1}'.format(topicName, job['job_id'])
+            message = job['job_id']
+            # Going to publish the job_id to the topic, so any converter(s) or other responders can handle this request
+            response = snsClient.publish(TopicArn=topicArn, Message=message, Subject=subject)
+            print('sns publish response:')
+            print(response)
 
-    if 'errorMessage' in responsePayload:
-        raise Exception('{0}'.format(responsePayload["errorMessage"]))
+            if response and 'MessageId' in response:
+                return {
+                    "job": job,
+                    "links": [
+                        {
+                            "href": "/job",
+                            "rel": "list",
+                            "method": "GET"
+                        },
+                        {
+                            "href": "/job/{0}".format(job['job_id']),
+                            "rel": "list",
+                            "method": "GET"
+                        },
+                    ],
+                }
 
-    return {
-        'job': job,
-        "links": [
-            {
-                "href": "/job",
-                "rel": "list",
-                "method": "GET"
-            },
-        ],
-        'response': responsePayload
-    }
+    # There were no topic or no subscribers so we raise an error
+    raise Exception("There are no tasks set up to convert {0} from {1} to {2}. Failed to convert.".format(job['resource_type'], job['input_format'], job['output_format']))
+
 
 def list_jobs():
     user = get_user()
@@ -205,6 +273,7 @@ def list_jobs():
         FilterExpression=Attr('user').eq(user)
     )
     return response['Items']
+
 
 def handle(e, ctx):
     global event, context, data
@@ -227,7 +296,7 @@ def handle(e, ctx):
             ret = register_module()
         elif action == 'job':
             if 'source' in data:
-                ret = start_job()
+                ret = broadcast_job()
             else:
                 ret = list_jobs()
         else:
@@ -238,3 +307,5 @@ def handle(e, ctx):
     #     e.message = 'Bad request: {0}'.format(e.message)
     #     raise e
     return ret
+
+
