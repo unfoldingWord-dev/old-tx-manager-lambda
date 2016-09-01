@@ -10,7 +10,8 @@ install:
 - "./install-requirements.sh"
 - pip install coveralls
 script: 
-- echo "At script"
+- echo "AAKI = $AWS_ACCESS_KEY_ID"
+- echo "ASAK = $AWS_SECRET_ACCESS_KEY"
 after_success:
 - coveralls
 - "./deploy.sh"
