@@ -11,9 +11,9 @@ install:
 - bash install-requirements.sh
 - pip install coveralls
 script: 
-- echo "sTYPE = $TRAVIS_EVENT_TYPE"
-- echo "sBRANCH = $TRAVIS_BRANCH"
-- echo "sENV_VARS = $TRAVIS_SECURE_ENV_VARS"
+- echo "TYPE = $TRAVIS_EVENT_TYPE"
+- echo "BRANCH = $TRAVIS_BRANCH"
+- echo "ENV_VARS = $TRAVIS_SECURE_ENV_VARS"
 - ls -l .
 after_success:
 - coveralls
