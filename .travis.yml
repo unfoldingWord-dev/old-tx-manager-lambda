@@ -17,12 +17,9 @@ script:
 - ls -l .
 after_success:
 - coveralls
-deploy:
-  provider: script
-  skip_cleanup: true
-  on:
-    branch: master
-  script: ./apex deploy
+- ls -l .
+- ./apex deploy
+- ./deploy.sh
 env:
   global:
   - PYTHONDONTWRITEBYTECODE=true
