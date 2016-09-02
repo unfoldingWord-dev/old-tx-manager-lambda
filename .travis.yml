@@ -17,7 +17,12 @@ script:
 after_success:
 - coveralls
 deploy:
-  provider: script
+- provider: script
+  skip_cleanup: true
+  on:
+    branch: master
+  script: ls -l .
+- provider: script
   skip_cleanup: true
   on:
     branch: master
