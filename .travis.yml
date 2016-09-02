@@ -3,7 +3,6 @@ python:
 - '2.7'
 before_install:
 - sudo apt-get install -y curl tar
-- sudo apt-get install -y awscli
 - pip install awscli
 - "./travis-install-apex.sh"
 install:
