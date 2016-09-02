@@ -19,12 +19,16 @@ after_success:
 - coveralls
 - ls -l .
 - echo $AWS_REGION
-- ./apex deploy
-- ./deploy.sh
+- echo $AWS_ACCESS_KEY_ID
 deploy:
-  provider: script
-  script: ./apex deploy  
+- provider: script
   skip_cleanup: true
+  script: ./apex deploy 
+  on:
+    branch: develop
+- provider: script
+  skip_cleanup: true
+  script: ./apex deploy
   on:
     branch: master
 env:
