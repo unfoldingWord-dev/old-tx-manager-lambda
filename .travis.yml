@@ -9,8 +9,11 @@ install:
 - ./install-requirements.sh
 - pip install coveralls
 script: 
-- echo "AAKI = $AWS_ACCESS_KEY_ID"
-- echo "ASAK = $AWS_SECRET_ACCESS_KEY"
+- echo "sAAKI = $AWS_ACCESS_KEY_ID"
+  echo "sASAK = $AWS_SECRET_ACCESS_KEY"
+  echo "sTYPE: ${TRAVIS_EVENT_TYPE}"
+  echo "sBRANCH: ${TRAVIS_BRANCH}"
+  echo "sENV_VARS: ${TRAVIS_SECURE_ENV_VARS}"
 after_success:
 - coveralls
 - ./deploy.sh

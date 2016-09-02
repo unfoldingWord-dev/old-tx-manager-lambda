@@ -6,6 +6,10 @@
 #
 ################################################################################
 
+echo "TYPE: ${TRAVIS_EVENT_TYPE}"
+echo "BRANCH: ${TRAVIS_BRANCH}"
+echo "ENV_VARS: ${TRAVIS_SECURE_ENV_VARS}"
+
 if [[ ${TRAVIS_EVENT_TYPE} == "push" && ${TRAVIS_BRANCH} == "master" && ${TRAVIS_SECURE_ENV_VARS} == "true" ]]
 then
     echo "Deploying..."
