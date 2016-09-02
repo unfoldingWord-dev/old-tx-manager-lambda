@@ -5,9 +5,9 @@ python:
 before_install:
 - sudo apt-get install -y curl tar
 - pip install awscli
-- ./travis-install-apex.sh
+- bash travis-install-apex.sh
 install:
-- ./install-requirements.sh
+- bash install-requirements.sh
 - pip install coveralls
 script: 
 - echo "sAAKI = $AWS_ACCESS_KEY_ID"
@@ -22,7 +22,7 @@ deploy:
   skip_cleanup: true
   on:
     branch: master
-  script: bash test.sh
+  script: bash deploy.sh
 env:
   global:
   - PYTHONDONTWRITEBYTECODE=true
