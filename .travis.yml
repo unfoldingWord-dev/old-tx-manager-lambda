@@ -11,9 +11,9 @@ install:
 script: 
 - echo "sAAKI = $AWS_ACCESS_KEY_ID"
 - echo "sASAK = $AWS_SECRET_ACCESS_KEY"
-- echo "sTYPE: $TRAVIS_EVENT_TYPE"
-- echo "sBRANCH: $TRAVIS_BRANCH"
-- echo "sENV_VARS: $TRAVIS_SECURE_ENV_VARS"
+- echo "sTYPE = $TRAVIS_EVENT_TYPE"
+- echo "sBRANCH = $TRAVIS_BRANCH"
+- echo "sENV_VARS = $TRAVIS_SECURE_ENV_VARS"
 after_success:
 - coveralls
 - ./deploy.sh
