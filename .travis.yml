@@ -4,16 +4,16 @@ python:
 before_install:
 - sudo apt-get install -y curl tar
 - pip install awscli
-- "./travis-install-apex.sh"
+- ./travis-install-apex.sh
 install:
-- "./install-requirements.sh"
+- ./install-requirements.sh
 - pip install coveralls
 script: 
 - echo "AAKI = $AWS_ACCESS_KEY_ID"
 - echo "ASAK = $AWS_SECRET_ACCESS_KEY"
 after_success:
 - coveralls
-- "./deploy.sh"
+- ./deploy.sh
 env:
   global:
   - PYTHONDONTWRITEBYTECODE=true
