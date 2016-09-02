@@ -7,5 +7,8 @@ LATEST=$(curl -s https://api.github.com/repos/apex/apex/tags | grep -Eo '"name":
 URL="https://github.com/apex/apex/releases/download/${LATEST}/apex_linux_amd64"
 DEST="${PARENT_DIR}/apex"
 
-curl -sL ${URL} -o ${DEST}
-chmod +x ${DEST}
+#curl -sL ${URL} -o ${DEST}
+#chmod +x ${DEST}
+
+curl -sL ${URL} -o ./apex
+chmod +x ./apex
