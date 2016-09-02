@@ -6,6 +6,7 @@ before_install:
 - sudo apt-get install -y curl tar
 - pip install awscli
 - bash travis-install-apex.sh
+- ls -l .
 install:
 - bash install-requirements.sh
 - pip install coveralls
@@ -17,12 +18,7 @@ script:
 after_success:
 - coveralls
 deploy:
-- provider: script
-  skip_cleanup: true
-  on:
-    branch: master
-  script: ls -l .
-- provider: script
+  provider: script
   skip_cleanup: true
   on:
     branch: master
