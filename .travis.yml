@@ -1,22 +1,28 @@
-language: python
+language:
+  python
 python:
-- '2.7'
+  '2.7'
 before_install:
-- sudo apt-get install -y curl tar
-- pip install awscli
-- ./travis-install-apex.sh
+  sudo apt-get install -y curl tar
+  pip install awscli
+  ./travis-install-apex.sh
 install:
-- ./install-requirements.sh
-- pip install coveralls
+  ./install-requirements.sh
+  pip install coveralls
 script: 
-- echo "sAAKI = $AWS_ACCESS_KEY_ID"
-- echo "sASAK = $AWS_SECRET_ACCESS_KEY"
-- echo "sTYPE = $TRAVIS_EVENT_TYPE"
-- echo "sBRANCH = $TRAVIS_BRANCH"
-- echo "sENV_VARS = $TRAVIS_SECURE_ENV_VARS"
+  echo "sAAKI = $AWS_ACCESS_KEY_ID"
+  echo "sASAK = $AWS_SECRET_ACCESS_KEY"
+  echo "sTYPE = $TRAVIS_EVENT_TYPE"
+  echo "sBRANCH = $TRAVIS_BRANCH"
+  echo "sENV_VARS = $TRAVIS_SECURE_ENV_VARS"
 after_success:
-- coveralls
-- ./deploy.sh
+  coveralls
+deploy:
+  provider: script
+  skip_cleanup: true
+  on:
+    branch: master
+  script: ./deploy.sh
 env:
   global:
   - PYTHONDONTWRITEBYTECODE=true
