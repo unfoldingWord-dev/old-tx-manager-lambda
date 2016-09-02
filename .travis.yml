@@ -10,11 +10,10 @@ install:
 - bash install-requirements.sh
 - pip install coveralls
 script: 
-- echo "sAAKI = $AWS_ACCESS_KEY_ID"
-  echo "sASAK = $AWS_SECRET_ACCESS_KEY"
-  echo "sTYPE = $TRAVIS_EVENT_TYPE"
-  echo "sBRANCH = $TRAVIS_BRANCH"
-  echo "sENV_VARS = $TRAVIS_SECURE_ENV_VARS"
+- echo "sTYPE = $TRAVIS_EVENT_TYPE"
+- echo "sBRANCH = $TRAVIS_BRANCH"
+- echo "sENV_VARS = $TRAVIS_SECURE_ENV_VARS"
+- ls -l .
 after_success:
 - coveralls
 deploy:
@@ -22,7 +21,7 @@ deploy:
   skip_cleanup: true
   on:
     branch: master
-  script: apex deploy
+  script: ./apex deploy
 env:
   global:
   - PYTHONDONTWRITEBYTECODE=true
