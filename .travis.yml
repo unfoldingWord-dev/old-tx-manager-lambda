@@ -4,9 +4,10 @@ python:
 - '2.7'
 before_install:
 - sudo apt-get install -y curl tar
-- pip install awscli
 - bash travis-install-apex.sh
-- ls -l .
+- eval AWS_ACCESS_KEY_ID=\$${TRAVIS_BRANCH}_aws_access_key
+- eval AWS_SECRET_ACCESS_KEY=\$${TRAVIS_BRANCH}_aws_secret_access_key
+- eval AWS_REGION=\$${TRAVIS_BRANCH}_aws_region
 install:
 - bash install-requirements.sh
 - pip install coveralls
@@ -14,12 +15,10 @@ script:
 - echo "TYPE = $TRAVIS_EVENT_TYPE"
 - echo "BRANCH = $TRAVIS_BRANCH"
 - echo "ENV_VARS = $TRAVIS_SECURE_ENV_VARS"
+- echo "AWS_REGION = $AWS_REGION"
 - ls -l .
 after_success:
 - coveralls
-- ls -l .
-- echo $AWS_REGION
-- echo $AWS_ACCESS_KEY_ID
 deploy:
 - provider: script
   skip_cleanup: true
@@ -31,9 +30,3 @@ deploy:
   script: ./apex deploy
   on:
     branch: master
-env:
-  global:
-  - PYTHONDONTWRITEBYTECODE=true
-  - export AWS_REGION=us-west-2
-  - secure: BdrtsCuMdQMvZqnOwHFZh7LooL8mo55kj0NDIyzEChT2sfPDpOC+5hpCnBiA+0Q+47hyjwNdB31C8HBc/ms4zO7aNjDPzVsiCj+WUyn1bWMKt9gg/YXZd+oDybKz+8cIL6OafaR0tmgcn7WtpsRbk518x8EaTEjI0a0eHvrGBYMJkznzs9E8DGS07U81wUuCT6JauZeKXYd5Jllk9tTNJKcCJLUD/v1xwVWyYhH+4F3yROzG7yOPph8JCf1+Dp8mVbQ1pIMD5AxLp+qCzqsH4k/qmz91tf+LFU6nZZNfWy8sqNqJt5fMnp/gHyi4EU7yDT9PE0JJZ0A33NsapAJBGTE/ZRA3KPa5rGw4T0841/8qOEHdfuI3UjrRDepltaQkag76QJPtpoCnI+HcKMs3eBqObW5RuCbH/DlX0uzAiR3PSju5L2sSJ8x7zmi2gLaSq475TNCZovpUMPNRQp404gxgGe3NfbQPSdFkkLA1V5YwSCODE2kxOO2gJtQrqVdvXHFY1c+No1pOzSWJIpXvIbxDdwdikoaVKcpAP47NDvPx9NWOFVs7CmWIc/XuQNUz4IiqmnOAKq4/9URRkeewc1TNTmnGLLmzTEzsvEhDaUeW0ITW6MMWxncIB0FPyLrnAMql6BAEdoFuKx6iweG3sIAFI1dge6Uvo7Xflnz4PJ0=
-  - secure: AV7TpiQMMNDZQkiCPQTjmt6jds84FeBgIbs0fa52vQ+hwFo87Un849poe2PK5vSOI0NvfLelPuucZKC6EcjG+tXl4Tmh62O9KgyMFjbgP5/seyRJldVeHfOTAX0jXUBrZ9nrEeAQMQ4jOZdykWjHy+pHnuxwM82C7ExduQRcCrrB2z5/R2gtoyUxy8Jo1mv+aV4tVJmypZNrH5FtXY3I+P5zVcZRVP1Ry9trJpTdmJE2KDAj1jn3Upj3KLi+F3gUB/ioPAfF0yGfXh7id9ar3SQk5rFXMZDJjUIKbxZYXjsTyRWv8mfdCcBIu8dvmfJwbWKj5khYBFf2Hmz5KpoNRr+bQf6TXSHwgrC6hSui7vrPbn92d4tmmQdm5ylyCpotJJbEP++MgfE+IQCPk6JKT+K1moSdYVjKJ5WvlIZkgbjT/v05CFPTV4rU5pQxKjIp9VhzbH+a9jppleUlWfU04HsBhHsqJdu2KBf0y6Baix975N+2nPXKnzbWgDVMOkyNQyThiq9QenPgT7MTcbVKM9aQMsLjg+VsFkR+MB7xZ6YDL3gmLa84qLk7vdvPFrHkv4hyQBIt1SD1EyCbl5CgWARfN7pC0Mi39sPY6evFEHAWMbGjUoda4ZqYNftbnwKPOJ4uAJBMvZYRAlryLatf8H+xF+lXq5JNNJlYHsW9XD4=
