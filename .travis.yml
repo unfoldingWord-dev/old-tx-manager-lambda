@@ -19,10 +19,10 @@ after_success:
 - coveralls
 deploy:
   provider: script
-  script: ./test.sh
   skip_cleanup: true
   on:
     branch: master
+  script: bash test.sh
 env:
   global:
   - PYTHONDONTWRITEBYTECODE=true
