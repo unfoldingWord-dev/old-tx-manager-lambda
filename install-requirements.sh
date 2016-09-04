@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
-#functions=("request" "messageLog", "jobStarted", "jobCompleted", "jobFailed")
-functions=("request")
-
-for function in "${functions[@]}"
+for file in `ls functions/*/requirements.txt`
 do
-  pip install -r functions/$function/requirements.txt -t functions/$function
+  pip install -r $file -t `dirname $file` 
 done
