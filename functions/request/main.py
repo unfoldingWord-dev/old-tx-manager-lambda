@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import boto3
+import json
 import gogs_client
 
 from datetime import datetime, timedelta
@@ -252,12 +253,46 @@ class TXManager(object):
         job_table.put_item(
             Item=job
         )
-        
+
+        # OLD WAY TO CALL JOB - REMOVE
+        table = dynamodb.Table('tx-module')
+        response = table.scan()
+        modules = response['Items']
+        module = None
+        for m in modules:
+            if data['resource_type'] in m['resource_types']:
+                if data['input_format'] in m['input_format']:
+                    if data['output_format'] in m['output_format']:
+                        module = m
+        if not module:
+            raise Exception('no converter was found to convert {0} from {1} to {2}'.format(data['resource_type'], data['input_format'], data['output_format']))
+        payload = {
+            'data': {
+                'job': job,
+                'cdn_bucket': event['cdn_bucket'],
+                'cdn_file': output_file
+             }
+        }
+        print("Payload to {0}:".format(module['name']))
+        print(payload)
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=module['name'],
+            Payload=json.dumps(payload)
+        )
+        responsePayload = json.loads(response['Payload'].read())
+        print("Response payload from {0}:".format(module['name']))
+        print(responsePayload)
+        if 'errorMessage' in responsePayload:
+            raise Exception('{0}'.format(responsePayload["errorMessage"]))
+
+
+
         # Will now broadcast this job to all subscribed to the <resource_type>-<input_format>2<output_format> topic
         sns_client = boto3.client('sns')
         # Going to get the ARN for the topic that we stored when creating it in register_module()
         topicTable = dynamodb.Table('tx-topic')
-        topic_name = '{0}-{1}2{2}'.format(job['resource_type'], job['input_format'], job['output_format'])
+        topic_name = '{0}-{1}2{2}-request'.format(job['resource_type'], job['input_format'], job['output_format'])
         response = topicTable.get_item(
             Key={
                 'TopicName': topic_name
@@ -300,7 +335,25 @@ class TXManager(object):
                     }
         
         # There were no topic or no subscribers so we raise an error
-        raise Exception("There are no tasks set up to convert {0} from {1} to {2}. Failed to convert.".format(job['resource_type'], job['input_format'], job['output_format']))
+#New way:
+#        raise Exception("There are no tasks set up to convert {0} from {1} to {2}. Failed to convert.".format(job['resource_type'], job['input_format'], job['output_format']))
+#Old way:
+        return {
+                    "job": job,
+                    "links": [
+                        {
+                            "href": "/job",
+                                "rel": "list",
+                                "method": "GET"
+                            },
+                            {
+                                "href": "/job/{0}".format(job['job_id']),
+                                "rel": "list",
+                                "method": "GET"
+                            },
+                        ],
+                    }
+
 
     def list_jobs(self):
         user = self.get_user()
