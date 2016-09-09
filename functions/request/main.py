@@ -273,7 +273,7 @@ class TXManager(object):
             print("Payload to {0}:".format(module['name']))
             print(payload)
 
-            self.log_message('Telling module {0} to convert {1}'.format(module['name'], job['output']))
+            self.log_message('Telling module {0} to convert {1} and put at {2}'.format(module['name'], job['source'], job['output']))
             lambda_client = boto3.client('lambda')
             response = lambda_client.invoke(
                 FunctionName=module['name'],
