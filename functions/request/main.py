@@ -162,6 +162,9 @@ class TXManager(object):
             "cdn_bucket": event["cdn_bucket"],
             "cdn_file": output_file,
             "output_expiration": expiration.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "job_status": "requested",
+            "success": None,
+            "deployed": False,
             "links": {
                 "href": "/job/{0}".format(job_id),
                 "rel": "self",
@@ -243,9 +246,10 @@ class TXManager(object):
                 Key={
                     'job_id': job['job_id'],
                 },
-                UpdateExpression="set start_timestamp = :start_timestamp",
+                UpdateExpression="set start_timestamp = :start_timestamp, job_status = :job_status",
                 ExpressionAttributeValues={
                     ':start_timestamp': start_timestamp,
+                    ':job_status': 'started'
                 }
             )
             print('Updated job in tx-job table with start_timestamp = {0}'.format(start_timestamp))
@@ -298,11 +302,11 @@ class TXManager(object):
 
         if len(self.errors):
             success = False
-            job_status = "fail"
+            job_status = "failed"
             message = "Conversion failed"
         elif len(self.warnings) > 0:
             success = True
-            job_status = "warning"
+            job_status = "warnings"
             message = "Conversion successful with warnings"
         else:
             success = True
@@ -318,7 +322,7 @@ class TXManager(object):
             Key={
                 'job_id': job['job_id'],
             },
-            UpdateExpression="set end_timestamp = :end_timestamp, success = :success, job_status = :job_status, message = :message, logs = :logs, errors = :errors, warnings = :warnings",
+            UpdateExpression="set end_timestamp = :end_timestamp, success = :success, job_status = :job_status, message = :message, logs = :logs, errors = :errors, warnings = :warnings, deployed = :deployed",
             ExpressionAttributeValues={
                 ':end_timestamp': end_timestamp,
                 ':success': success,
@@ -326,7 +330,8 @@ class TXManager(object):
                 ':message': message,
                 ':logs': json.dumps(self.log),
                 ':errors': json.dumps(self.errors),
-                ':warnings': json.dumps(self.warnings)
+                ':warnings': json.dumps(self.warnings),
+                ':deployed': False
             }
         )
         print("Updated tx-job with end_timestamp, success, job_status, message, logs, errors and warnings.")
