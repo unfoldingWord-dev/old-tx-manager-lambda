@@ -1,6 +1,6 @@
 
 {
-  "name": "tx-manager",
+  "name": "tx-manager-lambda",
   "description": "tX Manager for handling conversions",
   "memory": 512,
   "timeout": 300,

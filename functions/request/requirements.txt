@@ -1,4 +1,0 @@
-requests
-boto3
-gogs_client
-#git+git://github.com/richmahn/tx-shared-tools.git@develop#egg=tx-shared-tools

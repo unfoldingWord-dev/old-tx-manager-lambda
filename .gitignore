@@ -1,6 +1,10 @@
+*.egg-info
+*.iml
+build/
+dist/
+
 # IDEs
 .idea
-*.iml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
