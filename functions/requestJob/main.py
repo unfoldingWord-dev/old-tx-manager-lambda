@@ -21,7 +21,7 @@ def handle(event, context):
         # if 'source' is given, and no job_id, that means to setup a new job for conversion
         if 'source' in job and 'job_id' not in job:
             job['job_id'] = context.aws_request_id
-            return TxManager(api_url=vars).setup_job(job)
+            return TxManager(**env_vars).setup_job(job)
         # Else we just list all jobs based on the given query data
         else:
             return TxManager(env_vars).list_jobs(job)

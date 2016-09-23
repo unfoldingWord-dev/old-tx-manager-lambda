@@ -18,7 +18,7 @@ def handle(event, context):
         if 'vars' in event and isinstance(event['vars'], dict):
             env_vars = event['vars']
 
-        return TxManager(env_vars).register_module(module)
+        return TxManager(**env_vars).register_module(module)
     except Exception as e:
         print(e)
         print(e.message)
