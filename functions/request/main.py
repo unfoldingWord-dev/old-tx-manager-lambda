@@ -43,7 +43,7 @@ class TXManager(object):
         
         gogs_url = data['gogs_url']
         gogs_api = gogs_client.GogsApi(gogs_url)
-        success = gogs_api.valid_authentication(gogs_client.GogsToken(data['user_token']))
+        success = gogs_api.valid_authentication(gogs_client.Token(data['user_token']))
         if not success:
             raise Exception('"user_token" invalid, needs to be a valid Gogs user at {0}'.format(data['gogs_url']))
         if 'username' in data and data['username']:
