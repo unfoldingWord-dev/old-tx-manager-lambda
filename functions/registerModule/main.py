@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-from manager_tools import txmanager
+from tx_manager import TxManager
 
 
 def handle(event, context):
