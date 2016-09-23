@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-from manager_tools import txmanager
+from tx_manager.tx_manager import TxManager
 
 
 def handle(event, context):
@@ -18,9 +18,9 @@ def handle(event, context):
 
         if 'source' in data and 'job_id' not in data:
             data['job_id'] = context.aws_request_id
-            return txmanager.TXManager(data).setup_job()
+            return TxManager(data).setup_job()
         else:
-            return txmanager.TXManager(data).list_jobs()
+            return TxManager(data).list_jobs()
     except Exception as e:
         print(e)
         print(e.message)

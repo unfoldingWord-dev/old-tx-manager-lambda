@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-from tx_manager import TxManager
+from tx_manager.tx_manager import TxManager
 
 
 def handle(event, context):
@@ -16,7 +16,7 @@ def handle(event, context):
         if 'vars' in event and isinstance(event['vars'], dict):
             data.update(event['vars'])
 
-        return txmanager.TXManager(data).register_module()
+        return TxManager(data).register_module()
     except Exception as e:
         print(e)
         print(e.message)

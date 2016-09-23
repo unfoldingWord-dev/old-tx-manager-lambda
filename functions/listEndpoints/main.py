@@ -16,7 +16,7 @@ def handle(event, context):
         if 'vars' in event and isinstance(event['vars'], dict):
             data.update(event['vars'])
 
-        return txmanager.TXManager(data).register_module()
+        return TxManager(data).list_endpoints()
     except Exception as e:
         print(e)
         print(e.message)
