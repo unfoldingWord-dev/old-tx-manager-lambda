@@ -7,16 +7,12 @@ from tx_manager.tx_manager import TxManager
 
 def handle(event, context):
     try:
-        # Get all params, both POST and GET and JSON from the request event
-        data = {}
-        if 'data' in event and isinstance(event['data'], dict):
-            data = event['data']
-        if 'body-json' in event and event['body-json'] and isinstance(event['body-json'], dict):
-            data.update(event['body-json'])
+        env_vars = {}
         if 'vars' in event and isinstance(event['vars'], dict):
-            data.update(event['vars'])
+            env_vars = event['vars']
+        print(env_vars)
 
-        return TxManager(data).list_endpoints()
+        return TxManager(env_vars).list_endpoints()
     except Exception as e:
         print(e)
         print(e.message)

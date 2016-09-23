@@ -8,15 +8,17 @@ from tx_manager.tx_manager import TxManager
 def handle(event, context):
     try:
         # Get all params, both POST and GET and JSON from the request event
-        data = {}
+        module = {}
         if 'data' in event and isinstance(event['data'], dict):
-            data = event['data']
+            module = event['data']
         if 'body-json' in event and event['body-json'] and isinstance(event['body-json'], dict):
-            data.update(event['body-json'])
-        if 'vars' in event and isinstance(event['vars'], dict):
-            data.update(event['vars'])
+            module.update(event['body-json'])
 
-        return TxManager(data).register_module()
+        env_vars = {}
+        if 'vars' in event and isinstance(event['vars'], dict):
+            env_vars = event['vars']
+
+        return TxManager(env_vars).register_module(module)
     except Exception as e:
         print(e)
         print(e.message)
