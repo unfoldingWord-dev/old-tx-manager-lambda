@@ -1,1 +1,1 @@
-git+git://github.com/richmahn/tx-manager.git@develop#egg=tx-manager
+tx_manager
