@@ -11,9 +11,6 @@ setup(
     packages=['tx_manager'],
     long_description='Unit test setup file',
     classifiers=[],
-    dependency_links=[
-                'git+git://github.com/richmahn/tx-manager.git#egg=tx-manager',
-    ],
     install_requires=[
         'tx-manager'
     ],

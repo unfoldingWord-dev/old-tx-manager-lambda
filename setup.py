@@ -20,9 +20,6 @@ setup(
     url="https://github.org/unfoldingWord-dev/tx-manager-lambda",
     long_description=read('README.md'),
     classifiers=[],
-    dependency_links=[
-                'git+git://github.com/richmahn/tx-manager.git#egg=tx-manager',
-    ],
     install_requires=[
         'tx-manager'
     ]
