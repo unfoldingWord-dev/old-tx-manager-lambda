@@ -21,6 +21,4 @@ def handle(event, context):
         return TxManager(**env_vars).register_module(module)
     except Exception as e:
         print(e)
-        print(e.message)
-        e.message = 'Bad request: {0}'.format(e.message)
-        raise e
+        raise Exception('Bad request: {0}'.format(e.message))

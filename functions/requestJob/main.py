@@ -6,8 +6,7 @@ from tx_manager.tx_manager import TxManager
 
 
 def handle(event, context):
-    if True:
-#    try:
+    try:
         # Get all params, both POST and GET and JSON from the request event
         job = {}
         if 'data' in event and isinstance(event['data'], dict):
@@ -30,8 +29,6 @@ def handle(event, context):
         # Else we just list all jobs based on the given query data
         else:
             return TxManager(env_vars).list_jobs(job)
-#    except Exception as e:
+    except Exception as e:
         print(e)
-        print(e.message)
-        e.message = 'Bad request: {0}'.format(e.message)
-        raise e
+        raise Exception('Bad Request: {0}'.format(e))
